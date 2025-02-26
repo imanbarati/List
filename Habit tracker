@@ -1,0 +1,102 @@
+pip install openpyxl
+import openpyxl
+from openpyxl.styles import Font, Alignment, PatternFill
+from openpyxl.utils import get_column_letter
+
+def create_habit_tracker():
+    # Create a new workbook and select the active sheet
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Momentum Log"
+
+    # Define habit data
+    habits = [
+        "Do 30 min yoga",
+        "Drink 3L of water",
+        "Test",
+        "Habit 4",
+        "Habit 5",
+        "Habit 6",
+        "Habit 7",
+        "Habit 8",
+        "Habit 9",
+        "Habit 10"
+    ]
+
+    # Set up headers (days 1 to 11)
+    ws['C4'] = "Habits"
+    for i in range(1, 12):
+        ws[f'{get_column_letter(3 + i)}4'] = i
+
+    # Add habit numbers and names
+    for i, habit in enumerate(habits, 1):
+        ws[f'B{i + 4}'] = i
+        ws[f'C{i + 4}'] = habit
+
+    # Add sample checkmarks (✔) for demonstration
+    sample_data = [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],  # Habit 1
+        [1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1],  # Habit 2
+        [1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1],  # Habit 3
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],  # Habit 4
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],  # Habit 5
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],  # Habit 6
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],  # Habit 7
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],  # Habit 8
+        [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],  # Habit 9
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]   # Habit 10
+    ]
+    for i, row in enumerate(sample_data, 5):
+        for j, value in enumerate(row, 4):
+            if value == 1:
+                ws[f'{get_column_letter(j)}{i}'] = "✔"
+
+    # Add total habits count
+    ws['C16'] = len(habits)
+
+    # Add formulas for completed, uncompleted, and percentage
+    for col in range(4, 15):  # Columns D to N
+        col_letter = get_column_letter(col)
+        # Completed count
+        ws[f'{col_letter}17'] = f'=COUNTIF({col_letter}5:{col_letter}15, "✔")'
+        # Uncompleted count
+        ws[f'{col_letter}18'] = f'={len(habits)}-{col_letter}17'
+        # Percentage
+        ws[f'{col_letter}19'] = f'=IFERROR({col_letter}17/$C$16, 0)'
+        ws[f'{col_letter}19'].number_format = '0%'
+
+    # Add labels
+    ws['A17'] = "Completed"
+    ws['A18'] = "Uncompleted"
+    ws['A19'] = "Percent (%)"
+
+    # Apply formatting
+    header_font = Font(bold=True)
+    ws['C4'].font = header_font
+    for cell in ws[4]:
+        if cell.column > 2:
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal='center')
+
+    # Add borders to the grid
+    for row in ws['B5:N15']:
+        for cell in row:
+            cell.border = openpyxl.styles.Border(
+                left=openpyxl.styles.Side(style='thin'),
+                right=openpyxl.styles.Side(style='thin'),
+                top=openpyxl.styles.Side(style='thin'),
+                bottom=openpyxl.styles.Side(style='thin')
+            )
+
+    # Add conditional formatting for percentages (green for high, red for low)
+    for cell in ws['D19:N19']:
+        cell.fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid") if cell.value < 0.8 else \
+                    PatternFill(start_color="00FF00", end_color="00FF00", fill_type="solid")
+
+    # Save the workbook
+    wb.save("Habit_Tracker.xlsx")
+    print("Habit tracker spreadsheet created as 'Habit_Tracker.xlsx'")
+
+# Run the script
+if __name__ == "__main__":
+    create_habit_tracker()
